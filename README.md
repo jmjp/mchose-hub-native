@@ -1,5 +1,9 @@
 # M HUB Native
 
+![CI](https://github.com/jmjp/mchose-hub-native/actions/workflows/ci.yml/badge.svg)
+![Release](https://github.com/jmjp/mchose-hub-native/actions/workflows/release.yml/badge.svg)
+![License: MIT](https://img.shields.io/badge/license-MIT-blue)
+
 A **WebView-free, native Rust + egui** reimplementation of the MCHOSE HUB
 ("M HUB") desktop companion for MCHOSE headsets — reconstructed by reverse
 engineering the official Electron client and its vendor components.
