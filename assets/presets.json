@@ -1,0 +1,518 @@
+{
+  "version": 1,
+  "source": "Ported verbatim from the installed application store %APPDATA%\\MCHOSEHUB\\files\\config\\eq.json (device-local ground truth for MCHOSE V9 PRO, keyed \"MCHOSE V9 PRO PID14429\").",
+  "categories": [
+    {
+      "id": "game",
+      "name": {
+        "en": "Game",
+        "zh": "游戏",
+        "pt": "Jogo"
+      },
+      "presets": [
+        {
+          "id": "game-default",
+          "names": {
+            "en": "Default",
+            "zh": "默认",
+            "pt": "Padrão"
+          },
+          "data": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "id": "game-valorant-1",
+          "names": {
+            "en": "VALORANT 1",
+            "zh": "无畏契约1",
+            "pt": "VALORANT 1"
+          },
+          "data": [
+            -6,
+            -5,
+            0,
+            -6,
+            0,
+            0,
+            6,
+            -3,
+            2,
+            0
+          ],
+          "group": "无畏契约"
+        },
+        {
+          "id": "game-valorant-2",
+          "names": {
+            "en": "VALORANT 2",
+            "zh": "无畏契约2",
+            "pt": "VALORANT 2"
+          },
+          "data": [
+            -2,
+            1,
+            4,
+            6,
+            -2,
+            1,
+            3,
+            2,
+            -3,
+            1
+          ],
+          "group": "无畏契约"
+        },
+        {
+          "id": "game-valorant-3",
+          "names": {
+            "en": "VALORANT 3",
+            "zh": "无畏契约3",
+            "pt": "VALORANT 3"
+          },
+          "data": [
+            -10,
+            -5,
+            10,
+            -2,
+            3,
+            2,
+            0,
+            2,
+            3,
+            0
+          ],
+          "group": "无畏契约"
+        },
+        {
+          "id": "game-cs-1",
+          "names": {
+            "en": "CS 1",
+            "zh": "CS1",
+            "pt": "CS 1"
+          },
+          "data": [
+            10,
+            -5,
+            10,
+            -2,
+            3,
+            2,
+            2,
+            5,
+            3,
+            2
+          ],
+          "group": "CS"
+        },
+        {
+          "id": "game-cs-2",
+          "names": {
+            "en": "CS 2",
+            "zh": "CS2",
+            "pt": "CS 2"
+          },
+          "data": [
+            4,
+            5,
+            0,
+            -2,
+            -2,
+            2,
+            2,
+            0,
+            3,
+            3
+          ],
+          "group": "CS"
+        },
+        {
+          "id": "game-apex-1",
+          "names": {
+            "en": "Apex 1",
+            "zh": "Apex1",
+            "pt": "Apex 1"
+          },
+          "data": [
+            6,
+            -4,
+            2,
+            -2,
+            -2,
+            2,
+            2,
+            2,
+            -1,
+            0
+          ],
+          "group": "Apex"
+        },
+        {
+          "id": "game-apex-2",
+          "names": {
+            "en": "Apex 2",
+            "zh": "Apex2",
+            "pt": "Apex 2"
+          },
+          "data": [
+            3,
+            2,
+            0,
+            0,
+            -2,
+            -1,
+            -1,
+            0,
+            -1,
+            -2
+          ],
+          "group": "Apex"
+        },
+        {
+          "id": "game-pubg-1",
+          "names": {
+            "en": "PUBG 1",
+            "zh": "绝地求生1",
+            "pt": "PUBG 1"
+          },
+          "data": [
+            5,
+            3,
+            10,
+            -2,
+            3,
+            2,
+            -3,
+            2,
+            3,
+            0
+          ],
+          "group": "绝地求生"
+        },
+        {
+          "id": "game-pubg-2",
+          "names": {
+            "en": "PUBG 2",
+            "zh": "绝地求生2",
+            "pt": "PUBG 2"
+          },
+          "data": [
+            10,
+            -5,
+            10,
+            -2,
+            3,
+            2,
+            2,
+            5,
+            3,
+            2
+          ],
+          "group": "绝地求生"
+        },
+        {
+          "id": "game-pubg-3",
+          "names": {
+            "en": "PUBG 3",
+            "zh": "绝地求生3",
+            "pt": "PUBG 3"
+          },
+          "data": [
+            -2,
+            -1,
+            0,
+            1,
+            2,
+            1,
+            0,
+            -1,
+            -2,
+            -2
+          ],
+          "group": "绝地求生"
+        },
+        {
+          "id": "game-cf-1",
+          "names": {
+            "en": "CF 1",
+            "zh": "CF1",
+            "pt": "CF 1"
+          },
+          "data": [
+            5,
+            -1,
+            3,
+            2,
+            -1,
+            -1,
+            1,
+            0,
+            0,
+            1
+          ],
+          "group": "CF"
+        },
+        {
+          "id": "game-delta-force-1",
+          "names": {
+            "en": "Delta Force 1",
+            "zh": "三角洲1",
+            "pt": "Delta Force 1"
+          },
+          "data": [
+            -3,
+            -3,
+            11,
+            4,
+            8,
+            4,
+            4,
+            5,
+            5,
+            0
+          ],
+          "group": "三角洲"
+        }
+      ]
+    },
+    {
+      "id": "music",
+      "name": {
+        "en": "Music",
+        "zh": "音乐",
+        "pt": "Música"
+      },
+      "presets": [
+        {
+          "id": "music-dance",
+          "names": {
+            "en": "Dance",
+            "zh": "舞曲",
+            "pt": "Dance"
+          },
+          "data": [
+            5,
+            2,
+            0,
+            -10,
+            -5,
+            0,
+            6,
+            12,
+            11,
+            10
+          ]
+        },
+        {
+          "id": "music-rap",
+          "names": {
+            "en": "Rap",
+            "zh": "饶舌曲",
+            "pt": "Rap"
+          },
+          "data": [
+            -13,
+            -9,
+            -4,
+            2,
+            8,
+            12,
+            2,
+            -11,
+            -2,
+            8
+          ]
+        },
+        {
+          "id": "music-heavy-metal",
+          "names": {
+            "en": "Heavy Metal",
+            "zh": "重金属",
+            "pt": "Heavy Metal"
+          },
+          "data": [
+            12,
+            7,
+            -3,
+            4,
+            13,
+            8,
+            3,
+            -3,
+            8,
+            12
+          ]
+        },
+        {
+          "id": "music-jazz",
+          "names": {
+            "en": "Jazz",
+            "zh": "爵士",
+            "pt": "Jazz"
+          },
+          "data": [
+            -8,
+            6,
+            0,
+            8,
+            -8,
+            10,
+            -2,
+            13,
+            8,
+            1
+          ]
+        },
+        {
+          "id": "music-soft-rock",
+          "names": {
+            "en": "Soft Rock",
+            "zh": "抒情摇滚",
+            "pt": "Soft Rock"
+          },
+          "data": [
+            5,
+            5,
+            2,
+            -2,
+            -8,
+            -12,
+            -4,
+            0,
+            7,
+            9
+          ]
+        },
+        {
+          "id": "music-rock",
+          "names": {
+            "en": "Rock",
+            "zh": "摇滚",
+            "pt": "Rock"
+          },
+          "data": [
+            6,
+            3,
+            -8,
+            -12,
+            -4,
+            3,
+            8,
+            10,
+            10,
+            7
+          ]
+        },
+        {
+          "id": "music-live",
+          "names": {
+            "en": "Live",
+            "zh": "现场",
+            "pt": "Ao vivo"
+          },
+          "data": [
+            -6,
+            0,
+            4,
+            8,
+            9,
+            9,
+            5,
+            3,
+            2,
+            1
+          ]
+        },
+        {
+          "id": "music-treble",
+          "names": {
+            "en": "Treble",
+            "zh": "高音",
+            "pt": "Agudos"
+          },
+          "data": [
+            -10,
+            -11,
+            -12,
+            -6,
+            2,
+            8,
+            13,
+            13,
+            11,
+            14
+          ]
+        },
+        {
+          "id": "music-bass",
+          "names": {
+            "en": "Bass",
+            "zh": "低音",
+            "pt": "Graves"
+          },
+          "data": [
+            11,
+            7,
+            3,
+            0,
+            0,
+            -6,
+            -10,
+            -10,
+            -2,
+            -2
+          ]
+        },
+        {
+          "id": "music-classical",
+          "names": {
+            "en": "Classical",
+            "zh": "古典乐",
+            "pt": "Clássica"
+          },
+          "data": [
+            0,
+            7,
+            -1,
+            -7,
+            -12,
+            -8,
+            0,
+            10,
+            4,
+            -5
+          ]
+        },
+        {
+          "id": "music-vocal",
+          "names": {
+            "en": "Vocal",
+            "zh": "声乐",
+            "pt": "Vocal"
+          },
+          "data": [
+            -13,
+            -8,
+            0,
+            6,
+            14,
+            4,
+            -4,
+            -7,
+            -8,
+            -10
+          ]
+        }
+      ]
+    }
+  ]
+}
