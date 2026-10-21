@@ -39,7 +39,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             xvfb x11-utils imagemagick libgl1 libglx-mesa0 libgl1-mesa-dri \
-            libegl1 libxkbcommon0 libwayland-client0
+            libegl1 libxkbcommon0 libxkbcommon-x11-0 libwayland-client0 \
+            libx11-6 libxcb1 libxcb-xkb1 libxcursor1 libxrandr2 libxi6
           Xvfb :99 -screen 0 1280x800x24 &
           sleep 2
           export DISPLAY=:99
