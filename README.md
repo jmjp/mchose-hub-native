@@ -75,7 +75,17 @@ cargo clippy
 
 Prebuilt binaries for Windows, Linux and macOS are attached to every
 [release](https://github.com/jmjp/mchose-hub-native/releases), built by GitHub Actions
-(`.github/workflows/release.yml`, triggered by `v*` tags).
+(`.github/workflows/release.yml`, triggered by `v*` tags). Each release exposes both:
+
+- **raw binaries** for direct download — `mchose-hub-native-windows-x86_64.exe`,
+  `mchose-hub-native-linux-x86_64`, `mchose-hub-native-macos-x86_64`;
+- **archives** (`.zip` / `.tar.gz`) that bundle the README/LICENSE/NOTICE and preserve
+  the executable bit;
+- **`SHA256SUMS.txt`** for integrity verification.
+
+GitHub does not preserve file permissions on release downloads: after downloading the
+Linux/macOS raw binaries run `chmod +x`, and on macOS allow the unsigned app under
+System Settings -> Privacy & Security (or `xattr -d com.apple.quarantine <file>`).
 
 ## Data & configuration
 
