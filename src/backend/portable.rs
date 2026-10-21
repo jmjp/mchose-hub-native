@@ -74,7 +74,7 @@ impl AudioBackend for PortableAudioBackend {
                 self.state.volume.mic_muted = muted;
             }
         }
-        Ok(self.state)
+        Ok(self.state.clone())
     }
 
     fn apply(&mut self, change: AudioChange) -> Result<()> {
