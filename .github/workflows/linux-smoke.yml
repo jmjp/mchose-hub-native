@@ -1,0 +1,66 @@
+name: Linux smoke test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Run published Linux binary
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download latest Linux binary
+        run: |
+          set -euo pipefail
+          TAG=$(curl -fsSL "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest" | jq -r .tag_name)
+          echo "Testing release: $TAG"
+          URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/mchose-hub-native-linux-x86_64"
+          curl -fsSL "$URL" -o mchose-hub-native
+          chmod +x mchose-hub-native
+          file mchose-hub-native
+          ldd mchose-hub-native || true
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+
+      - name: Run protocol/audio probe (headless)
+        run: |
+          set +e
+          ./mchose-hub-native --probe > probe.json 2> probe.err
+          echo "exit=$?"
+          head -c 6000 probe.json || true
+          echo
+          echo "--- stderr ---"
+          head -c 3000 probe.err || true
+
+      - name: Run GUI headlessly under Xvfb (best effort)
+        continue-on-error: true
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            xvfb x11-utils imagemagick libgl1 libglx-mesa0 libgl1-mesa-dri \
+            libegl1 libxkbcommon0 libwayland-client0
+          Xvfb :99 -screen 0 1280x800x24 &
+          sleep 2
+          export DISPLAY=:99
+          export LIBGL_ALWAYS_SOFTWARE=1
+          ./mchose-hub-native > gui.log 2>&1 &
+          APP_PID=$!
+          sleep 12
+          import -window root screenshot.png || true
+          kill "$APP_PID" 2>/dev/null || true
+          sleep 1
+          echo "--- gui.log ---"
+          tail -n 60 gui.log || true
+
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: linux-smoke-test-${{ env.TAG }}
+          path: |
+            probe.json
+            probe.err
+            screenshot.png
+            gui.log
+          if-no-files-found: warn
