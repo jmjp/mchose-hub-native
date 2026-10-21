@@ -1,0 +1,96 @@
+{
+  "audio": {
+    "backend": "System",
+    "capabilities": {
+      "device_power": false,
+      "effects": false,
+      "eq": false,
+      "hid_commands": false,
+      "hid_status": false,
+      "mic_dsp": false,
+      "mic_listen": false,
+      "mic_volume": false,
+      "surround": false,
+      "test_sound": false,
+      "volume": false
+    },
+    "endpoint": null,
+    "state": {
+      "effects": [
+        {
+          "cutoff_hz": 200,
+          "enabled": false,
+          "level": 3,
+          "mode": 0,
+          "noise_suppression": 0
+        },
+        {
+          "cutoff_hz": 200,
+          "enabled": false,
+          "level": 5,
+          "mode": 0,
+          "noise_suppression": 0
+        },
+        {
+          "cutoff_hz": 200,
+          "enabled": false,
+          "level": 0,
+          "mode": 0,
+          "noise_suppression": 0
+        },
+        {
+          "cutoff_hz": 200,
+          "enabled": false,
+          "level": 3,
+          "mode": 0,
+          "noise_suppression": 0
+        }
+      ],
+      "eq_bands": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "eq_enabled": false,
+      "mic": {
+        "ai_noise_reduction": false,
+        "magic_voice": false,
+        "magic_voice_type": 0,
+        "mic_listen": false,
+        "noise_suppression": false
+      },
+      "surround": {
+        "enabled": false,
+        "mode": "Music",
+        "room": "Medium"
+      },
+      "surround_amplification": false,
+      "volume": {
+        "mic": 0.9200000166893005,
+        "mic_muted": false,
+        "speaker": 0.5,
+        "speaker_muted": false
+      }
+    }
+  },
+  "battery_queries": [],
+  "collections": [],
+  "command_path": null,
+  "dsp_write_test": {
+    "apply_error": "control not supported by this backend: equalizer",
+    "apply_ok": false,
+    "initial": false,
+    "read_back": false,
+    "restore_ok": false,
+    "target": true
+  },
+  "firmware_path": null,
+  "notify_path": null
+}
