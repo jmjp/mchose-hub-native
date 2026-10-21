@@ -5,6 +5,7 @@
 //! * macOS: LaunchAgent property list in `~/Library/LaunchAgents`.
 
 use std::path::PathBuf;
+#[cfg(windows)]
 use std::process::Command;
 
 const VALUE_NAME: &str = "MHubNative";
