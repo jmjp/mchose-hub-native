@@ -156,6 +156,9 @@ fn endpoint_name() -> Option<String> {
         if command_ok("pactl", &["--version"]) {
             return Some("PulseAudio default output".to_string());
         }
+        if amixer_available() {
+            return Some("ALSA default mixer".to_string());
+        }
     }
     #[cfg(target_os = "macos")]
     {
@@ -176,7 +179,9 @@ fn command_ok(program: &str, args: &[&str]) -> bool {
 
 #[cfg(target_os = "linux")]
 fn mixer_available() -> bool {
-    command_ok("wpctl", &["--version"]) || command_ok("pactl", &["--version"])
+    command_ok("wpctl", &["--version"])
+        || command_ok("pactl", &["--version"])
+        || amixer_available()
 }
 
 #[cfg(target_os = "linux")]
@@ -192,7 +197,13 @@ fn read_output() -> Option<(f32, bool)> {
             }
         }
     }
-    read_pactl(&["get-sink-volume", "@DEFAULT_SINK@"], &["get-sink-mute", "@DEFAULT_SINK@"])
+    if let Some(state) = read_pactl(
+        &["get-sink-volume", "@DEFAULT_SINK@"],
+        &["get-sink-mute", "@DEFAULT_SINK@"],
+    ) {
+        return Some(state);
+    }
+    read_amixer("Master")
 }
 
 #[cfg(target_os = "linux")]
@@ -208,10 +219,13 @@ fn read_input() -> Option<(f32, bool)> {
             }
         }
     }
-    read_pactl(
+    if let Some(state) = read_pactl(
         &["get-source-volume", "@DEFAULT_SOURCE@"],
         &["get-source-mute", "@DEFAULT_SOURCE@"],
-    )
+    ) {
+        return Some(state);
+    }
+    read_amixer("Capture")
 }
 
 #[cfg(target_os = "linux")]
@@ -245,6 +259,36 @@ fn read_pactl(volume_args: &[&str], mute_args: &[&str]) -> Option<(f32, bool)> {
         .ok()?;
     let mute_output = Command::new("pactl").args(mute_args).output().ok()?;
     let muted = String::from_utf8_lossy(&mute_output.stdout).contains("yes");
+    Some(((percent / 100.0).clamp(0.0, 1.0), muted))
+}
+
+#[cfg(target_os = "linux")]
+fn amixer_available() -> bool {
+    command_ok("amixer", &["sget", "Master"])
+}
+
+/// Read an ALSA control through `amixer sget` (fallback when PipeWire/PulseAudio
+/// are unavailable, e.g. a bare TTY/embedded setup).
+#[cfg(target_os = "linux")]
+fn read_amixer(control: &str) -> Option<(f32, bool)> {
+    let output = Command::new("amixer")
+        .args(["sget", control])
+        .output()
+        .ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    let text = String::from_utf8_lossy(&output.stdout);
+    let percent = text
+        .split('%')
+        .next()?
+        .rsplit('[')
+        .next()?
+        .split_whitespace()
+        .next()?
+        .parse::<f32>()
+        .ok()?;
+    let muted = text.contains("[off]");
     Some(((percent / 100.0).clamp(0.0, 1.0), muted))
 }
 
@@ -300,6 +344,16 @@ fn set_linux_volume(wpctl_target: &str, pactl_target: &str, value: f32, input: b
             return Ok(());
         }
     }
+    if amixer_available() {
+        let control = if input { "Capture" } else { "Master" };
+        let status = Command::new("amixer")
+            .args(["sset", control, &argument])
+            .status()
+            .map_err(|err| BackendError::Io(err.to_string()))?;
+        if status.success() {
+            return Ok(());
+        }
+    }
     Err(BackendError::Io("no working system mixer found".into()))
 }
 
@@ -323,6 +377,17 @@ fn set_linux_mute(wpctl_target: &str, pactl_target: &str, muted: bool, input: bo
         };
         let status = Command::new("pactl")
             .args([verb, target, flag])
+            .status()
+            .map_err(|err| BackendError::Io(err.to_string()))?;
+        if status.success() {
+            return Ok(());
+        }
+    }
+    if amixer_available() {
+        let control = if input { "Capture" } else { "Master" };
+        let argument = if muted { "mute" } else { "unmute" };
+        let status = Command::new("amixer")
+            .args(["sset", control, argument])
             .status()
             .map_err(|err| BackendError::Io(err.to_string()))?;
         if status.success() {

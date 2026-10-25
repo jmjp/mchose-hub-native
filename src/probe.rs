@@ -103,6 +103,8 @@ pub fn run() -> Result<(), String> {
         attempts.push(query_matrix("notify", device, command.as_ref(), COMMAND_REPORT_ID));
     }
     report["battery_queries"] = json!(attempts);
+    report["bluetooth"] = serde_json::to_value(crate::backend::bluetooth::query())
+        .unwrap_or(serde_json::Value::Null);
 
     // Unsolicited notifications on the notify collection.
     if let Some(device) = notify.as_ref() {
@@ -226,6 +228,7 @@ fn query_matrix(
     // 1. Unframed vendor request (0x65 0x01 ...).
     let payload = protocol::battery_request();
     result["unframed"] = write_probe(writer, reader_other, report_id, &payload);
+    result["eq_query"] = write_probe(writer, reader_other, report_id, &protocol::eq_query_request());
 
     // 2. Framed GET_BATTERY_SLEEP (cmd 11).
     let frame = protocol::Frame::request(protocol::cmd::GET_BATTERY_SLEEP, Vec::new());

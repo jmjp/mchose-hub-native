@@ -176,6 +176,74 @@ pub fn decode_battery_reply(payload: &[u8]) -> Option<(BatteryState, ChargeStatu
     ))
 }
 
+/// Unframed vendor EQ-profile query marker (reply carries the active profile).
+pub const EQ_QUERY_MARKER: u8 = 0x11;
+/// Unframed vendor EQ-profile set marker.
+pub const EQ_SET_MARKER: u8 = 0x21;
+/// Hardware EQ profiles exposed by the headset DSP (Game 1, Game 2, Music).
+pub const EQ_PROFILE_COUNT: u8 = 3;
+
+/// Build the unframed vendor EQ-profile query (`[0x11, 0 * 62]`).
+pub fn eq_query_request() -> [u8; REPORT_DATA_LEN] {
+    let mut payload = [0u8; REPORT_DATA_LEN];
+    payload[0] = EQ_QUERY_MARKER;
+    payload
+}
+
+/// Build the unframed vendor EQ-profile set request (`[0x21, 0x01, mode, ...]`).
+pub fn eq_set_request(mode: u8) -> [u8; REPORT_DATA_LEN] {
+    let mut payload = [0u8; REPORT_DATA_LEN];
+    payload[0] = EQ_SET_MARKER;
+    payload[1] = 0x01;
+    payload[2] = mode.min(EQ_PROFILE_COUNT - 1);
+    payload
+}
+
+/// A reply received on the unframed vendor channel.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum VendorReply {
+    /// Battery level and charge state (`0x65` reply).
+    Battery {
+        battery: BatteryState,
+        status: ChargeStatus,
+    },
+    /// Hardware EQ profile (`0x11`/`0x21` reply).
+    EqMode(u8),
+}
+
+/// Decode an unframed vendor reply (report id already stripped).
+///
+/// * battery reply: `[0x65, percent, charge_status, ...]`
+/// * EQ reply: `[0x11, mode, ...]` (some firmware echoes `[0x21, 0x01, mode, ...]`)
+pub fn decode_vendor_reply(payload: &[u8]) -> Option<VendorReply> {
+    match payload.first().copied()? {
+        BATTERY_MARKER => {
+            if payload.len() < 3 {
+                return None;
+            }
+            let status = ChargeStatus::from_byte(payload[2]);
+            Some(VendorReply::Battery {
+                battery: BatteryState {
+                    percent: payload[1],
+                    charging: status.is_charging(),
+                },
+                status,
+            })
+        }
+        EQ_QUERY_MARKER => payload.get(1).copied().map(VendorReply::EqMode),
+        EQ_SET_MARKER => {
+            // Set replies observed as [0x21, 0x01, mode]; accept both layouts.
+            let mode = if payload.get(1) == Some(&0x01) {
+                payload.get(2).copied()
+            } else {
+                payload.get(1).copied()
+            };
+            mode.map(VendorReply::EqMode)
+        }
+        _ => None,
+    }
+}
+
 /// Build the feature-report request used to read firmware version strings.
 ///
 /// `target`: 0 = headset MCU, 1 = dongle/receiver.
@@ -426,6 +494,41 @@ mod tests {
         assert_eq!(battery.percent, 64);
         assert!(battery.charging);
         assert!(!asleep);
+    }
+
+    #[test]
+    fn vendor_battery_reply_decodes_level_and_charge_state() {
+        let reply = protocol_reply(&[0x65, 87, 3]);
+        assert_eq!(
+            reply,
+            Some(VendorReply::Battery {
+                battery: BatteryState {
+                    percent: 87,
+                    charging: true
+                },
+                status: ChargeStatus::Charging,
+            })
+        );
+    }
+
+    #[test]
+    fn vendor_eq_reply_decodes_profile() {
+        assert_eq!(decode_vendor_reply(&[0x11, 2]), Some(VendorReply::EqMode(2)));
+        assert_eq!(
+            decode_vendor_reply(&[0x21, 0x01, 1]),
+            Some(VendorReply::EqMode(1))
+        );
+    }
+
+    #[test]
+    fn eq_set_request_carries_profile() {
+        let request = eq_set_request(2);
+        assert_eq!(&request[..3], &[0x21, 0x01, 2]);
+        assert_eq!(eq_query_request()[0], 0x11);
+    }
+
+    fn protocol_reply(bytes: &[u8]) -> Option<VendorReply> {
+        decode_vendor_reply(bytes)
     }
 
     #[test]

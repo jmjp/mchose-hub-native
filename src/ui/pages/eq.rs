@@ -13,6 +13,8 @@
 use egui::{CornerRadius, RichText, Stroke};
 
 use crate::app::MHubApp;
+use crate::backend::hid::HidCommand;
+use crate::model::device::ConnectionMode;
 use crate::model::audio::{AudioChange, EQ_BANDS, EQ_FREQUENCIES_HZ, EQ_GAIN_MAX, EQ_GAIN_MIN};
 use crate::model::presets::{EqPreset, PresetCategory};
 use crate::ui::theme::Palette;
@@ -27,6 +29,8 @@ const BANDS_PER_COLUMN: usize = EQ_BANDS / 2;
 /// Draw the equalizer page.
 pub fn draw(app: &mut MHubApp, ui: &mut egui::Ui, palette: Palette) {
     page_header(app, ui, palette, "eq.title", "eq.subtitle");
+    draw_hardware_card(app, ui, palette);
+    ui.add_space(12.0);
     draw_band_card(app, ui, palette);
     ui.add_space(12.0);
     draw_preset_card(app, ui, palette);
@@ -158,6 +162,61 @@ fn draw_band_card(app: &mut MHubApp, ui: &mut egui::Ui, palette: Palette) {
                 value: bands[band],
             });
         }
+    }
+}
+
+/// Hardware EQ profiles stored in the headset DSP (2.4G dongle only).
+fn draw_hardware_card(app: &mut MHubApp, ui: &mut egui::Ui, palette: Palette) {
+    let available = app.selected_device.is_some()
+        && app.status.connection == ConnectionMode::Wireless24G;
+    let active = app.status.hardware_eq_mode;
+    let mut selected: Option<u8> = None;
+
+    widgets::card(ui, palette, |ui| {
+        ui.set_min_width(ui.available_width());
+        widgets::section_header(
+            ui,
+            palette,
+            app.i18n.t("eq.hardware"),
+            Some(app.i18n.t("eq.hardware_hint")),
+        );
+        ui.horizontal(|ui| {
+            for (mode, key) in [
+                (0u8, "eq.profile.game1"),
+                (1u8, "eq.profile.game2"),
+                (2u8, "eq.profile.music"),
+            ] {
+                let button = egui::Button::new(
+                    RichText::new(app.i18n.t(key)).size(12.0).color(palette.text),
+                )
+                .selected(active == Some(mode))
+                .min_size(egui::Vec2::new(104.0, 30.0));
+                if ui.add_enabled(available, button).clicked() {
+                    selected = Some(mode);
+                }
+            }
+            if let Some(mode) = active {
+                ui.label(
+                    RichText::new(
+                        app.i18n
+                            .t(match mode {
+                                0 => "eq.profile.game1",
+                                1 => "eq.profile.game2",
+                                _ => "eq.profile.music",
+                            }),
+                    )
+                    .size(11.0)
+                    .color(palette.text_weak),
+                );
+            }
+        });
+        if !available {
+            note(ui, palette, app.i18n.t("eq.hardware_unavailable"));
+        }
+    });
+
+    if let Some(mode) = selected {
+        app.hid.send(HidCommand::SetHardwareEq(mode));
     }
 }
 

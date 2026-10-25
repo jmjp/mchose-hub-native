@@ -3,6 +3,7 @@
 
 use std::time::{Duration, Instant};
 
+use crate::backend::bluetooth::{self, BluetoothStatus};
 use crate::backend::hid::{HidCommand, HidEvent, HidService};
 use crate::backend::{open_audio_backend, AudioBackend, BackendError};
 use crate::config::AppConfig;
@@ -55,6 +56,10 @@ pub struct MHubApp {
     pub audio: AudioState,
     pub caps: Capabilities,
     pub status: DeviceStatus,
+    /// Bluetooth headset state, when no USB/2.4G HID device is active.
+    pub bluetooth: Option<BluetoothStatus>,
+    bt_rx: Option<crossbeam_channel::Receiver<Option<BluetoothStatus>>>,
+    last_bt_poll: Instant,
     pub devices: Vec<HidDeviceDescriptor>,
     pub selected_device: Option<HidDeviceDescriptor>,
     pub page: Page,
@@ -124,6 +129,9 @@ impl MHubApp {
             audio,
             caps,
             status: DeviceStatus::default(),
+            bluetooth: None,
+            bt_rx: None,
+            last_bt_poll: Instant::now(),
             devices: Vec::new(),
             selected_device: None,
             page,
@@ -376,7 +384,9 @@ impl MHubApp {
                     firmware,
                 } => {
                     log::info!("device connected: {}", descriptor.product_name);
+                    self.bluetooth = None;
                     self.status = DeviceStatus {
+                        connection: crate::model::device::ConnectionMode::Wireless24G,
                         headset_firmware: firmware,
                         ..DeviceStatus::default()
                     };
@@ -398,6 +408,8 @@ impl MHubApp {
                 HidEvent::Log(message) => log::info!("{message}"),
             }
         }
+
+        self.poll_bluetooth();
 
         // Periodically rescan while nothing is connected.
         if self.selected_device.is_none() && self.last_hid_scan.elapsed() > Duration::from_secs(3) {
@@ -422,6 +434,61 @@ impl MHubApp {
         // Repaint at ~30 Hz for HID updates, or sooner when a UI event happened.
         if !self.toasts.is_empty() || self.selected_device.is_none() {
             ctx.request_repaint_after(Duration::from_millis(100));
+        }
+    }
+
+    /// Poll Bluetooth battery in the background (only while no HID device is open).
+    fn poll_bluetooth(&mut self) {
+        if let Some(receiver) = self.bt_rx.as_ref() {
+            if let Ok(status) = receiver.try_recv() {
+                self.bt_rx = None;
+                self.apply_bluetooth(status);
+            }
+        }
+        if self.selected_device.is_some() {
+            self.bluetooth = None;
+            return;
+        }
+        if self.bt_rx.is_none() && self.last_bt_poll.elapsed() >= Duration::from_secs(15) {
+            self.last_bt_poll = Instant::now();
+            let (tx, rx) = crossbeam_channel::bounded(1);
+            self.bt_rx = Some(rx);
+            std::thread::Builder::new()
+                .name("mchose-bt".into())
+                .spawn(move || {
+                    let _ = tx.send(bluetooth::query());
+                })
+                .ok();
+        }
+    }
+
+    fn apply_bluetooth(&mut self, status: Option<BluetoothStatus>) {
+        match status {
+            Some(bt) => {
+                if self.selected_device.is_some() {
+                    return;
+                }
+                log::info!("Bluetooth device: {} ({}%)", bt.name, bt.percent);
+                self.status.connection = crate::model::device::ConnectionMode::Bluetooth;
+                self.status.battery = Some(crate::model::device::BatteryState {
+                    percent: bt.percent,
+                    charging: bt.charging,
+                });
+                self.status.bluetooth_name = Some(bt.name.clone());
+                self.status.asleep = false;
+                self.status.hardware_eq_mode = None;
+                self.status.headset_firmware = None;
+                self.status.dongle_firmware = None;
+                self.bluetooth = Some(bt);
+            }
+            None => {
+                if self.bluetooth.take().is_some() {
+                    self.status.battery = None;
+                    self.status.bluetooth_name = None;
+                    self.status.connection =
+                        crate::model::device::ConnectionMode::Wireless24G;
+                }
+            }
         }
     }
 

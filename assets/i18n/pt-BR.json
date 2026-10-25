@@ -207,5 +207,12 @@
   "effect.mode.music.short": "Música",
   "effect.mode.voice.short": "Voz",
   "backend.system": "Mixer do sistema (Linux/macOS)",
-  "settings.platform_note": "O DSP do fabricante (equalizador, efeitos, processamento do microfone) só existe no Windows. Neste sistema o app usa volume/mute do sistema; o dispositivo HID usa o mesmo protocolo."
+  "settings.platform_note": "O DSP do fabricante (equalizador, efeitos, processamento do microfone) só existe no Windows. Neste sistema o app usa volume/mute do sistema; o dispositivo HID usa o mesmo protocolo.",
+  "eq.hardware": "Perfil de EQ do headset (hardware)",
+  "eq.hardware_hint": "Perfil gravado no DSP do fone; troque pelo dongle 2.4G.",
+  "eq.hardware_unavailable": "Disponível apenas com o dongle 2.4G (não no Bluetooth).",
+  "eq.profile.game1": "Jogo 1",
+  "eq.profile.game2": "Jogo 2",
+  "eq.profile.music": "Música",
+  "device.hardware_eq": "EQ de hardware"
 }

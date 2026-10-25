@@ -7,6 +7,7 @@
 //!   property store; a mock backend is used by tests and in UI development.
 //! * [`hid`] — the 0xAA HID protocol for device status and device commands.
 
+pub mod bluetooth;
 pub mod hid;
 pub mod mock;
 pub mod protocol;

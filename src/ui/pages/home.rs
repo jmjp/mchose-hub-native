@@ -111,13 +111,25 @@ fn draw_status_card(app: &MHubApp, ui: &mut egui::Ui, palette: Palette) {
                 }
             }
         }
+        if app.selected_device.is_none() {
+            if let Some(bt) = &app.bluetooth {
+                ui.label(
+                    RichText::new(&bt.name)
+                        .strong()
+                        .size(16.0)
+                        .color(palette.text),
+                );
+            }
+        }
         widgets::divider(ui, palette);
-        widgets::kv_row(
-            ui,
-            palette,
-            app.i18n.t("device.connection"),
-            app.i18n.t("connect.wireless24g"),
-        );
+        let connection = if app.bluetooth.is_some() {
+            app.i18n.t("connect.bluetooth")
+        } else if app.selected_device.is_some() {
+            app.i18n.t("connect.wireless24g")
+        } else {
+            app.i18n.t("device.unknown")
+        };
+        widgets::kv_row(ui, palette, app.i18n.t("device.connection"), connection);
         let battery = match (&app.status, app.status.battery_label()) {
             (status, Some(label)) if status.battery.map(|b| b.charging).unwrap_or(false) => {
                 format!("⚡ {label}")
@@ -138,6 +150,19 @@ fn draw_status_card(app: &MHubApp, ui: &mut egui::Ui, palette: Palette) {
             .clone()
             .unwrap_or_else(|| app.i18n.t("device.unknown").to_string());
         widgets::kv_row(ui, palette, app.i18n.t("device.dongle"), &dongle);
+        if let Some(mode) = app.status.hardware_eq_mode {
+            let profile = match mode {
+                0 => "eq.profile.game1",
+                1 => "eq.profile.game2",
+                _ => "eq.profile.music",
+            };
+            widgets::kv_row(
+                ui,
+                palette,
+                app.i18n.t("device.hardware_eq"),
+                app.i18n.t(profile),
+            );
+        }
     });
 }
 

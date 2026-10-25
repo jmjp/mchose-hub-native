@@ -207,5 +207,12 @@
   "effect.mode.music.short": "Music",
   "effect.mode.voice.short": "Speech",
   "backend.system": "System mixer (Linux/macOS)",
-  "settings.platform_note": "Vendor DSP (equalizer, effects, microphone processing) is only available on Windows. This build runs with system volume/mute on Linux and macOS; HID device support uses the same protocol."
+  "settings.platform_note": "Vendor DSP (equalizer, effects, microphone processing) is only available on Windows. This build runs with system volume/mute on Linux and macOS; HID device support uses the same protocol.",
+  "eq.hardware": "Hardware EQ profile (headset)",
+  "eq.hardware_hint": "Profile stored in the headset DSP; switch it over the 2.4G dongle.",
+  "eq.hardware_unavailable": "Available only with the 2.4G dongle (not over Bluetooth).",
+  "eq.profile.game1": "Game 1",
+  "eq.profile.game2": "Game 2",
+  "eq.profile.music": "Music",
+  "device.hardware_eq": "Hardware EQ"
 }

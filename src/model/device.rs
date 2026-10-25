@@ -110,6 +110,12 @@ impl DeviceIdentity {
 pub struct DeviceStatus {
     pub battery: Option<BatteryState>,
     pub asleep: bool,
+    /// Active transport (USB cable, 2.4G dongle or Bluetooth).
+    pub connection: ConnectionMode,
+    /// Active hardware EQ profile stored in the headset DSP (0..=2), when reported.
+    pub hardware_eq_mode: Option<u8>,
+    /// Bluetooth device name, when connected over Bluetooth.
+    pub bluetooth_name: Option<String>,
     /// Headset MCU firmware version (HID feature report / notify).
     pub headset_firmware: Option<String>,
     /// Dongle/receiver firmware version, when reported.

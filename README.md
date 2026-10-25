@@ -18,6 +18,9 @@ The reference target is the **MCHOSE V9 PRO** headset (USB `VID 0x291D / PID 0x3
 
 - Native, frameless egui app; light/dark theme follows the operating system
 - Device discovery, identity, firmware status and the recovered 0xAA HID protocol
+- Battery level / charging status (vendor HID query; Bluetooth fallback where exposed)
+- Hardware EQ profiles stored in the headset DSP (Game 1 / Game 2 / Music, 2.4G)
+- Bluetooth connection and battery status (BlueZ on Linux, PnP on Windows)
 - 10-band equalizer, factory preset library, user presets, import/export
 - Sound effects: treble enhancement, dynamic bass (cutoff), volume balance, vocal clarity
 - Microphone DSP: AI/steady noise reduction, magic voice; microphone monitoring
@@ -49,7 +52,8 @@ cargo run --release        # or target/release/mchose-hub-native
 
 Linux build prerequisites: `libudev-dev`, `libxkbcommon-dev`, `libwayland-dev`,
 `libx11-xcb-dev`, `pkg-config` and a C toolchain. For HID access add a udev rule
-granting your user access to `291d:385d` (or run with suitable permissions).
+granting your user access to `291d:385d` (or run with suitable permissions). Volume
+control uses PipeWire (`wpctl`), PulseAudio (`pactl`) or ALSA (`amixer`) in that order.
 
 macOS needs the Xcode command line tools and Input Monitoring/Accessibility permission
 for HID access.
@@ -106,8 +110,10 @@ Stored under `%APPDATA%\MCHOSE_HUB_Native\` on Windows and
 
 ## Limitations
 
-- Battery level is not reported by this headset (the official app shows none either;
-  every HID query stays silent).
+- Battery status depends on firmware: the vendor query (`55 65 01`) is implemented
+  and is used when the device answers (e.g. over Bluetooth the OS battery is used).
+  On the tested Windows unit every battery query stayed silent, and the official app
+  also showed no battery; the UI reports "unknown" in that case.
 - Virtual 7.1 writes are not implemented (vendor control-handler encoding; UI read-only).
 - Firmware OTA, THX, cloud account/store/RGB, per-app profiles and the vendor OSD are
   intentionally not reimplemented.

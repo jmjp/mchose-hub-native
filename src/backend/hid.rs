@@ -18,7 +18,7 @@ use std::time::{Duration, Instant};
 use crossbeam_channel::{bounded, Receiver, Sender};
 use hidapi::{DeviceInfo, HidApi, HidDevice};
 
-use crate::backend::protocol::{self, Frame, ResetTarget};
+use crate::backend::protocol::{self, Frame, ResetTarget, VendorReply};
 use crate::model::device::{family_for, BatteryState, DeviceStatus, HidDeviceDescriptor};
 
 /// Usage pages of the V9 PRO topology.
@@ -41,6 +41,8 @@ pub enum HidCommand {
     SetAutoShutdown(u16),
     /// Factory reset the given target(s).
     FactoryReset(ResetTarget),
+    /// Select one of the headset's stored hardware EQ profiles (0..=2).
+    SetHardwareEq(u8),
     /// Stop the worker.
     Shutdown,
 }
@@ -179,6 +181,17 @@ fn worker(cmd_rx: Receiver<HidCommand>, evt_tx: Sender<HidEvent>) {
                     send_command(&evt_tx, device, frame);
                 }
             }
+            Ok(HidCommand::SetHardwareEq(mode)) => {
+                if let Some(device) = handles.as_mut() {
+                    let mode = mode.min(protocol::EQ_PROFILE_COUNT - 1);
+                    send_raw_command(&evt_tx, device, &protocol::eq_set_request(mode));
+                    device.status.hardware_eq_mode = Some(mode);
+                    let _ = evt_tx.send(HidEvent::Status(Box::new(device.status.clone())));
+                    // Give the DSP time to apply the profile, then read it back.
+                    thread::sleep(Duration::from_millis(60));
+                    send_raw_command(&evt_tx, device, &protocol::eq_query_request());
+                }
+            }
             Err(crossbeam_channel::RecvTimeoutError::Timeout) => {}
         }
 
@@ -190,7 +203,8 @@ fn worker(cmd_rx: Receiver<HidCommand>, evt_tx: Sender<HidEvent>) {
                     let _ = evt_tx.send(HidEvent::Devices(descriptors.clone()));
                     if let Some(descriptor) = descriptors.first() {
                         match open_device(&api, descriptor.clone()) {
-                            Ok(device) => {
+                            Ok(mut device) => {
+                                request_status(&evt_tx, &mut device);
                                 let _ = evt_tx.send(HidEvent::Connected {
                                     descriptor: descriptor.clone(),
                                     firmware: device.status.headset_firmware.clone(),
@@ -223,13 +237,7 @@ fn worker(cmd_rx: Receiver<HidCommand>, evt_tx: Sender<HidEvent>) {
                 let mut buf = [0u8; 128];
                 match notify.read_timeout(&mut buf, 20) {
                     Ok(0) => {}
-                    Ok(n) => {
-                        if let Some(frame) = decode_input_report(&buf[..n]) {
-                            handle_input_frame(&evt_tx, device, &frame);
-                        } else if let Some((battery, status)) = decode_battery_report(&buf[..n]) {
-                            apply_battery(&evt_tx, device, battery, status);
-                        }
-                    }
+                    Ok(n) => process_report(&evt_tx, device, &buf[..n]),
                     Err(err) => {
                         let _ = evt_tx.send(HidEvent::Log(format!("HID read error: {err}")));
                         disconnected = true;
@@ -241,13 +249,7 @@ fn worker(cmd_rx: Receiver<HidCommand>, evt_tx: Sender<HidEvent>) {
                 let mut buf = [0u8; 128];
                 match command.read_timeout(&mut buf, 10) {
                     Ok(0) => {}
-                    Ok(n) => {
-                        if let Some(frame) = decode_input_report(&buf[..n]) {
-                            handle_input_frame(&evt_tx, device, &frame);
-                        } else if let Some((battery, status)) = decode_battery_report(&buf[..n]) {
-                            apply_battery(&evt_tx, device, battery, status);
-                        }
-                    }
+                    Ok(n) => process_report(&evt_tx, device, &buf[..n]),
                     Err(err) => {
                         let _ = evt_tx.send(HidEvent::Log(format!(
                             "HID command channel read error: {err}"
@@ -415,25 +417,37 @@ fn decode_input_report(data: &[u8]) -> Option<Frame> {
     Frame::decode(payload).ok()
 }
 
-/// Decode the unframed vendor battery/status reply (payload begins with 0x65).
-fn decode_battery_report(data: &[u8]) -> Option<(BatteryState, protocol::ChargeStatus)> {
+/// Decode an unframed vendor reply (battery/status or hardware EQ profile).
+fn decode_vendor_report(data: &[u8]) -> Option<VendorReply> {
     let (_, payload) = split_report(data)?;
-    protocol::decode_battery_reply(payload)
+    protocol::decode_vendor_reply(payload).or_else(|| protocol::decode_vendor_reply(data))
 }
 
-/// Update the device status from an unframed battery reply.
-fn apply_battery(
-    evt_tx: &Sender<HidEvent>,
-    device: &mut DeviceHandles,
-    battery: BatteryState,
-    status: protocol::ChargeStatus,
-) {
-    device.status.battery = Some(battery);
-    device.status.asleep = status.is_asleep();
+/// Route one raw report either to the framed protocol or the vendor channel.
+fn process_report(evt_tx: &Sender<HidEvent>, device: &mut DeviceHandles, data: &[u8]) {
+    if let Some(frame) = decode_input_report(data) {
+        handle_input_frame(evt_tx, device, &frame);
+    } else if let Some(reply) = decode_vendor_report(data) {
+        apply_vendor_reply(evt_tx, device, reply);
+    }
+}
+
+/// Update the device status from one unframed vendor reply.
+fn apply_vendor_reply(evt_tx: &Sender<HidEvent>, device: &mut DeviceHandles, reply: VendorReply) {
+    match reply {
+        VendorReply::Battery { battery, status } => {
+            device.status.battery = Some(battery);
+            device.status.asleep = status.is_asleep();
+            log::debug!("battery reply: {battery:?} ({status:?})");
+        }
+        VendorReply::EqMode(mode) => {
+            device.status.hardware_eq_mode = Some(mode.min(protocol::EQ_PROFILE_COUNT - 1));
+            log::debug!("hardware EQ profile reply: {mode}");
+        }
+    }
     if let Some(last) = device.status.last_seen_ms.as_mut() {
         *last = 0;
     }
-    log::debug!("battery reply: {battery:?} ({status:?})");
     let _ = evt_tx.send(HidEvent::Status(Box::new(device.status.clone())));
 }
 
@@ -469,6 +483,7 @@ fn request_status(evt_tx: &Sender<HidEvent>, device: &mut DeviceHandles) {
     // Battery/status uses the vendor's *unframed* 0x65 request (see
     // findings-prior-art.md §4); prompt volume and auto-shutdown are framed requests.
     send_raw_command(evt_tx, device, &protocol::battery_request());
+    send_raw_command(evt_tx, device, &protocol::eq_query_request());
     send_command(
         evt_tx,
         device,

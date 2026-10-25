@@ -207,5 +207,12 @@
   "effect.mode.music.short": "音乐",
   "effect.mode.voice.short": "语音",
   "backend.system": "系统混音器（Linux/macOS）",
-  "settings.platform_note": "厂商 DSP（均衡器、音效、麦克风处理）仅在 Windows 可用。此构建在 Linux/macOS 使用系统音量/静音；HID 设备使用相同协议。"
+  "settings.platform_note": "厂商 DSP（均衡器、音效、麦克风处理）仅在 Windows 可用。此构建在 Linux/macOS 使用系统音量/静音；HID 设备使用相同协议。",
+  "eq.hardware": "耳机硬件 EQ 配置",
+  "eq.hardware_hint": "配置保存在耳机 DSP 中；请通过 2.4G 接收器切换。",
+  "eq.hardware_unavailable": "仅在 2.4G 接收器下可用（蓝牙不可用）。",
+  "eq.profile.game1": "游戏 1",
+  "eq.profile.game2": "游戏 2",
+  "eq.profile.music": "音乐",
+  "device.hardware_eq": "硬件 EQ"
 }

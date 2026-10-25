@@ -1,6 +1,6 @@
 [package]
 name = "mchose-hub-native"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 rust-version = "1.82"
 description = "Native Rust/egui companion app for MCHOSE headsets — a WebView-free reimplementation of MCHOSE HUB (M HUB)"
